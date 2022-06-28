@@ -1,2 +1,3 @@
 # ama-learn
-Implementation of machine learning algorithms and models in python
+
+Implementation of machine learning algorithms and models in python, such as perceptron, KNN, RandomForest, KMeans...
