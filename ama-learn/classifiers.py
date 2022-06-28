@@ -162,3 +162,57 @@ class KNN(AbstractClassifier):
             yhat.append(np.unique(self.y[k_points])[0])
 
         return np.array(yhat)
+
+
+class LineaireRandom(AbstractClassifier):
+
+    def __init__(self):
+        self.weights = None
+        self.classes = None
+        self.dim = 0
+
+    def __predict(self, x):
+        return int(np.sign(np.dot(self.weights, x)))
+
+    def fit(self, X, y):
+        """
+        Allows to fit the model on the given set
+
+        Arguments :
+            - X: ndarray with samples
+            - y: ndarray with corresponding labels
+        """
+
+        (nX, d) = X.shape
+        (nY, ) = y.shape
+
+        if nX != nY:
+            raise ValueError("X and Y must be the same size")
+
+        self.dim = d
+
+        self.classes = np.unique(y)
+
+        if len(self.classes) != 2:
+            raise ValueError("Y must have two classes")
+
+        w = np.random.uniform(-1, 1, d)
+        self.weights = w / np.linalg.norm(w)
+
+    def predict(self, X):
+        """
+        Predict class labels for samples in X.
+        """
+
+        yhat = []
+
+        (nX, dim) = X.shape
+
+        if dim != self.dim:
+            raise ValueError(
+                "The dimension of the samples must be equal to that of the inputs")
+
+        for i in np.arange(nX):
+            yhat.append(self.classes[min(self.__predict(X[i]) + 1, 1)])
+
+        return np.array(yhat)
