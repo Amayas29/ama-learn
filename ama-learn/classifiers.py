@@ -283,3 +283,75 @@ class OAA(AbstractClassifier):
             yhat.append(self.classes[p])
 
         return np.array(yhat)
+
+
+class Adaline(AbstractClassifier):
+
+    def __init__(self, learning_rate, max_iter=100):
+        self.learning_rate = learning_rate
+        self.max_iter = max_iter
+
+        self.weights = None
+        self.classes = None
+        self.dim = 0
+
+    def __predict(self, x):
+        return int(np.sign(np.dot(self.weights, x)))
+
+    def fit(self, X, y):
+        """
+        Allows to fit the model on the given set
+
+        Arguments :
+            - X: ndarray with samples
+            - y: ndarray with corresponding labels
+        """
+
+        (nX, d) = X.shape
+        (nY, ) = y.shape
+
+        if nX != nY:
+            raise ValueError("X and Y must be the same size")
+
+        self.dim = d
+
+        self.classes = np.unique(y)
+
+        if len(self.classes) != 2:
+            raise ValueError("Y must have two classes")
+
+        def refactor_y(y): return -1 if y == self.classes[0] else 1
+        refactor_y = np.vectorize(refactor_y)
+        y = refactor_y(y)
+
+        self.weights = 2 * np.random.uniform(0, 1, d) - 1
+
+        nb_iter = 0
+
+        while nb_iter <= self.max_iter:
+
+            for i in range(nX):
+                xi = X[i].reshape((1, d))
+
+                delta_wc = xi.T @ (xi @ self.weights - y[i])
+                self.weights -= self.learning_rate * delta_wc
+
+            nb_iter += 1
+
+    def predict(self, X):
+        """
+        Predict class labels for samples in X.
+        """
+
+        yhat = []
+
+        (nX, dim) = X.shape
+
+        if dim != self.dim:
+            raise ValueError(
+                "The dimension of the samples must be equal to that of the inputs")
+
+        for i in np.arange(nX):
+            yhat.append(self.classes[min(self.__predict(X[i]) + 1, 1)])
+
+        return np.array(yhat)
