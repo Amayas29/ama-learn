@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import numpy as np
+
 NOT_IMPLEMENTED_ERROR = NotImplementedError("Please Implement this method")
 
 
@@ -16,7 +17,7 @@ class AbstractClassifier:
         """
         Allows to fit the model on the given set
 
-        Arguments : 
+        Arguments :
             - X: ndarray with samples
             - y: ndarray with corresponding labels
         """
@@ -32,7 +33,8 @@ class AbstractClassifier:
         """
         Return the mean accuracy on the given test data and labels.
         """
-        raise NOT_IMPLEMENTED_ERROR
+        yhat = self.predict(X)
+        return np.where(y == yhat, 1., 0.).mean()
 
 
 class Perceptron(AbstractClassifier):
@@ -99,6 +101,7 @@ class Perceptron(AbstractClassifier):
         """
         Predict class labels for samples in X.
         """
+
         yhat = []
 
         (nX, dim) = X.shape
@@ -112,9 +115,50 @@ class Perceptron(AbstractClassifier):
 
         return np.array(yhat)
 
-    def score(self, X, y):
+
+class KNN(AbstractClassifier):
+
+    def __init__(self, k):
+        self.k = k
+
+        self.dim = 0
+        self.X = None
+        self.y = None
+
+    def __distance(self, p1, p2):
+        return np.sqrt(np.sum((p1 - p2) ** 2))
+
+    def fit(self, X, y):
         """
-        Return the mean accuracy on the given test data and labels.
+        Allows to fit the model on the given set
+
+        Arguments :
+            - X: ndarray with samples
+            - y: ndarray with corresponding labels
         """
-        yhat = self.predict(X)
-        return np.where(y == yhat, 1., 0.).mean()
+
+        (nX, d) = X.shape
+        (nY, ) = y.shape
+
+        if nX != nY:
+            raise ValueError("X and Y must be the same size")
+
+        self.X = X
+        self.y = y
+        self.dim = d
+
+    def predict(self, X):
+        """
+        Predict class labels for samples in X.
+        """
+
+        yhat = []
+
+        for x in X:
+            dist_points = np.argsort(np.array([self.__distance(x, p)
+                                     for p in self.X]))
+
+            k_points = dist_points[0:self.k]
+            yhat.append(np.unique(self.y[k_points])[0])
+
+        return np.array(yhat)
