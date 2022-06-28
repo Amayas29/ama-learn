@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import numpy as np
+from copy import deepcopy
 
 NOT_IMPLEMENTED_ERROR = NotImplementedError("Please Implement this method")
 
@@ -214,5 +215,71 @@ class LineaireRandom(AbstractClassifier):
 
         for i in np.arange(nX):
             yhat.append(self.classes[min(self.__predict(X[i]) + 1, 1)])
+
+        return np.array(yhat)
+
+
+class OAA(AbstractClassifier):
+
+    def __init__(self, base_classifier):
+        self.base_classifier = base_classifier
+        self.classifiers = []
+        self.classes = None
+
+    def fit(self, X, y):
+        """
+        Allows to fit the model on the given set
+
+        Arguments :
+            - X: ndarray with samples
+            - y: ndarray with corresponding labels
+        """
+
+        (nX, _) = X.shape
+        (nY, ) = y.shape
+
+        if nX != nY:
+            raise ValueError("X and Y must be the same size")
+
+        self.classes = np.unique(y)
+        number_classes = len(self.classes)
+
+        self.classifiers = [deepcopy(
+            self.base_classifier) for _ in range(number_classes)]
+
+        def refresh_y(y, c): return 1 if y == c else -1
+        refresh_y = np.vectorize(refresh_y)
+
+        for i in range(number_classes):
+            y_class = refresh_y(y, self.classes[i])
+            self.classifiers[i].fit(X, y_class)
+
+    def predict(self, X):
+        """
+        Predict class labels for samples in X.
+        """
+        yhat = []
+
+        yhats = []
+
+        for classif in self.classifiers:
+            yhats.append(classif.predict(X))
+
+        (nX, _) = X.shape
+
+        for i in np.arange(nX):
+            scores = [0 for _ in self.classifiers]
+
+            for j in range(len(self.classifiers)):
+                if yhats[j][i] == 1:
+                    scores[j] += 1
+                else:
+                    for k in range(len(self.classifiers)):
+                        scores[k] += 1
+
+                    scores[j] -= 1
+
+            p = np.argmax(scores)
+            yhat.append(self.classes[p])
 
         return np.array(yhat)
